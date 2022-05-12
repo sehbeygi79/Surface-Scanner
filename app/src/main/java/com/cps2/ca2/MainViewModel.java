@@ -24,7 +24,6 @@ import java.util.TimerTask;
 
 public class MainViewModel extends AndroidViewModel {
     long startTime = 0;
-    private static final float NS2S = 1.0f / 1000000000.0f;
     private static final float EPSILON = 0.1f;
     public static final float STANDARD_GRAVITY = 9.80665f;
 
@@ -39,9 +38,11 @@ public class MainViewModel extends AndroidViewModel {
 
     private Sensor gyroscopeSensor;
     private SensorEventListener gyroscopeListener;
+    private long rotationDelta;
 
     private Sensor accelerometerSensor;
     private SensorEventListener accelerometerListener;
+    private long accelerometerDelta;
 
     private Timer timer = null;
 
@@ -93,6 +94,8 @@ public class MainViewModel extends AndroidViewModel {
         startStopButtonTextLiveData.setValue("Start");
         showingEntriesLiveData.setValue(Collections.emptyList());
         allEntries.clear();
+        height = 0;
+        xCounter = 0;
     }
 
     private void startSensors() {
@@ -109,7 +112,7 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     private float currentRotationRateX, currentRotationRateY, currentRotationRateZ;
-    private float currentRotationX = 0f, currentRotationY = 0f, currentRotationZ = 0f;
+    private float currentRotationY = 0f;
     private long currentRotationTimestamp = 0;
 
     private float currentForceX, currentForceY, currentForceZ;
@@ -122,7 +125,7 @@ public class MainViewModel extends AndroidViewModel {
                 // This timestep's delta rotation to be multiplied by the current rotation
                 // after computing it from the gyro sample data.
                 if (currentRotationTimestamp != 0) {
-                    final float dT = (event.timestamp - currentRotationTimestamp) * NS2S;
+                    rotationDelta = (event.timestamp - currentRotationTimestamp) / 1000000;
                     // Axis of the rotation sample, not normalized yet.
                     float axisX = event.values[0];
                     float axisY = event.values[1];
@@ -142,27 +145,10 @@ public class MainViewModel extends AndroidViewModel {
                     currentRotationRateX = axisX;
                     currentRotationRateY = axisY;
                     currentRotationRateZ = axisZ;
-                    currentRotationX += currentRotationRateX * dT;
-                    currentRotationY += currentRotationRateY * dT;
-                    currentRotationZ += currentRotationRateZ * dT;
+                    currentRotationY += currentRotationRateY;
                     calculateShowingDate();
                 }
                 currentRotationTimestamp = event.timestamp;
-
-
-//                if (currentRotationTimestamp == 0) {
-//                    return;
-//                }
-//                long deltaTime = (long) ((event.timestamp - currentRotationTimestamp) * NS2S);
-//                // Rotation values are rad/s
-//                currentRotationRateX = (float) Math.toDegrees(event.values[0]);
-//                currentRotationRateY = (float) Math.toDegrees(event.values[1]);
-//                currentRotationRateZ = (float) Math.toDegrees(event.values[2]);
-//
-//
-//                float accuracy = event.accuracy;
-//                currentRotationTimestamp = event.timestamp;
-//                doLogic();
             }
 
             @Override
@@ -174,14 +160,17 @@ public class MainViewModel extends AndroidViewModel {
         accelerometerListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                // Force values are m/s^2
-                currentForceX = event.values[0];
-                currentForceY = event.values[1];
-                currentForceZ = event.values[2];
+                if (currentForceTimestamp != 0) {
+                    accelerometerDelta = (event.timestamp - currentForceTimestamp) / 1000000;
+                    // Force values are m/s^2
+                    currentForceX = event.values[0];
+                    currentForceY = event.values[1];
+                    currentForceZ = event.values[2];
 
-                float accuracy = event.accuracy;
+                    float accuracy = event.accuracy;
+                    calculateShowingDate();
+                }
                 currentForceTimestamp = event.timestamp;
-                calculateShowingDate();
             }
 
             @Override
@@ -192,6 +181,7 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     int xCounter = 0;
+    float height = 0;
 
     private void calculateShowingDate() {
         if (currentRotationTimestamp == 0 || currentForceTimestamp == 0) {
@@ -201,8 +191,17 @@ public class MainViewModel extends AndroidViewModel {
             return;
         }
 
-        Log.d("SS", "forceZ: " + (STANDARD_GRAVITY - Math.abs(currentForceZ)) + " rotY: " + currentRotationRateY);
-        float y = (STANDARD_GRAVITY - Math.abs(currentForceZ)) * currentRotationRateY;
+//        Log.d("SS", "forceZ: " + (STANDARD_GRAVITY - Math.abs(currentForceZ)) + " rotY: " + currentRotationY);
+        Log.d("SS", "ssdd: " + -currentRotationRateY);
+        boolean isIncremental = currentRotationRateY < 0;
+        float displacementY = (float) ((STANDARD_GRAVITY - Math.abs(currentForceZ)) * Math.pow(accelerometerDelta, 2) * Math.sin(currentRotationY));
+        if (isIncremental) {
+            height += displacementY;
+        } else {
+            height -= displacementY;
+        }
+
+        float y = height;
         float x = ++xCounter;
         List<Entry> showingList = showingEntriesLiveData.getValue();
         if (showingList == null || showingList.isEmpty()) {
