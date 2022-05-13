@@ -78,8 +78,8 @@ public class MainActivity extends AppCompatActivity {
                         chart.notifyDataSetChanged();
                         chart.invalidate();
                         chart.setVisibility(View.VISIBLE);
-                        chart.getAxisLeft().setAxisMinimum(-VEL_MAX);
-                        chart.getAxisLeft().setAxisMaximum(VEL_MAX);
+                        chart.getAxisLeft().setAxisMinimum(-DIST_MAX);
+                        chart.getAxisLeft().setAxisMaximum(DIST_MAX);
 
                         chart.getAxisRight().setEnabled(false);
                         // chart.getAxisRight().setAxisMinimum(20);

@@ -42,7 +42,7 @@ public class MainViewModel extends AndroidViewModel {
 
     private Sensor accelerometerSensor;
     private SensorEventListener accelerometerListener;
-    private long accelerometerDelta;
+    private float accelerometerDelta;
 
     private Timer timer = null;
 
@@ -107,7 +107,7 @@ public class MainViewModel extends AndroidViewModel {
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         sensorManager.registerListener(gyroscopeListener, gyroscopeSensor, 5000);
 
-        accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         sensorManager.registerListener(accelerometerListener, accelerometerSensor, 5000);
     }
 
@@ -115,7 +115,7 @@ public class MainViewModel extends AndroidViewModel {
     private float currentRotationY = 0f;
     private long currentRotationTimestamp = 0;
 
-    private float currentForceX, currentForceY, currentForceZ;
+    private float currentForceX, currentForceY, currentAccelZ;
     private long currentForceTimestamp = 0;
 
     private void initListeners() {
@@ -125,7 +125,7 @@ public class MainViewModel extends AndroidViewModel {
                 // This timestep's delta rotation to be multiplied by the current rotation
                 // after computing it from the gyro sample data.
                 if (currentRotationTimestamp != 0) {
-                    rotationDelta = (event.timestamp - currentRotationTimestamp) / 1000000;
+                    rotationDelta = (float) (event.timestamp - currentRotationTimestamp) / 1000000000;
                     // Axis of the rotation sample, not normalized yet.
                     float axisX = event.values[0];
                     float axisY = event.values[1];
@@ -167,11 +167,11 @@ public class MainViewModel extends AndroidViewModel {
             @Override
             public void onSensorChanged(SensorEvent event) {
                 if (currentForceTimestamp != 0) {
-                    accelerometerDelta = (event.timestamp - currentForceTimestamp) / 1000000;
+                    accelerometerDelta = (float) (event.timestamp - currentForceTimestamp) / 1000000000;
                     // Force values are m/s^2
                     currentForceX = event.values[0];
                     currentForceY = event.values[1];
-                    currentForceZ = event.values[2];
+                    currentAccelZ = event.values[2];
 
                     float accuracy = event.accuracy;
                     calculateShowingDate();
@@ -180,7 +180,7 @@ public class MainViewModel extends AndroidViewModel {
 
                 // Log.d("SS", "forceX: " + currentForceX + " / forceY: " + currentForceY + " /
                 // forceZ: "
-                // + currentForceZ);
+                // + currentAccelZ);
                 // Log.d("SS", "acc timestamp: " + currentForceTimestamp);
             }
 
@@ -205,28 +205,12 @@ public class MainViewModel extends AndroidViewModel {
             return;
         }
 
-        // Log.d("SS", "forceZ: " + (STANDARD_GRAVITY - Math.abs(currentForceZ)) + "
-        // rotY: " + currentRotationY);
-        // Log.d("SS", "ssdd: " + -currentRotationRateY);
-        // boolean isIncremental = currentRotationRateY < 0;
-        // float displacementY = (float) ((Math.abs(currentForceZ) - STANDARD_GRAVITY) *
-        // Math.pow(accelerometerDelta, 2));
-        float accel = (currentForceZ - STANDARD_GRAVITY);
-        // zAccel = accel;
-        float vel = accel * (((float)accelerometerDelta)/1000) + zVel;
-        zVel = (Math.abs(accel) < 1) ? (float)(vel * 0.99) : vel;
-        // zVel = vel;
-        float dist = vel * (((float)accelerometerDelta)/1000) + zDist;
-        zDist = dist;
-        // * Math.sin(currentRotationY));
-        // if (isIncremental) {
-        // height += displacementY;
-        // } else {
-        // height -= displacementY;
-        // }
-        // height += displacementY;
-        Log.d("SS", "(a= " + accel + ", v= " + vel + ", x= " + dist + ")");
-        float y = dist;
+        zAccel = currentAccelZ - 0;
+        zVel += (float) (zAccel * accelerometerDelta);
+
+        zDist += (float) (zVel * accelerometerDelta);
+
+        float y = zDist;
         float x = ++xCounter;
         List<Entry> showingList = showingEntriesLiveData.getValue();
         if (showingList == null || showingList.isEmpty()) {
