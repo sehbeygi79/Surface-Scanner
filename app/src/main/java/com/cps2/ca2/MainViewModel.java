@@ -46,7 +46,6 @@ public class MainViewModel extends AndroidViewModel {
 
     private Timer timer = null;
 
-
     public MainViewModel(@NonNull Application application) {
         super(application);
     }
@@ -69,7 +68,8 @@ public class MainViewModel extends AndroidViewModel {
                 int minutes = ((int) (elapsedMillis / 1000 / 60));
                 int seconds = ((int) ((elapsedMillis / 1000) % 60));
                 long milliseconds = elapsedMillis % 1000;
-                String finalText = String.format("%02d", minutes) + ":" + String.format("%02d", seconds) + ":" + String.format("%03d", milliseconds);
+                String finalText = String.format("%02d", minutes) + ":" + String.format("%02d", seconds) + ":"
+                        + String.format("%03d", milliseconds);
                 timerTextLiveData.postValue(finalText);
             }
         }, 0, 60);
@@ -91,7 +91,7 @@ public class MainViewModel extends AndroidViewModel {
     private void stopRunning() {
         stopSensors();
         stopTimer();
-        startStopButtonTextLiveData.setValue("Start");
+        startStopButtonTextLiveData.setValue("Start_zzzzzz");
         showingEntriesLiveData.setValue(Collections.emptyList());
         allEntries.clear();
         height = 0;
@@ -105,10 +105,10 @@ public class MainViewModel extends AndroidViewModel {
         initListeners();
 
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        sensorManager.registerListener(gyroscopeListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(gyroscopeListener, gyroscopeSensor, 5000);
 
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(accelerometerListener, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(accelerometerListener, accelerometerSensor, 5000);
     }
 
     private float currentRotationRateX, currentRotationRateY, currentRotationRateZ;
@@ -149,6 +149,12 @@ public class MainViewModel extends AndroidViewModel {
                     calculateShowingDate();
                 }
                 currentRotationTimestamp = event.timestamp;
+
+                // Log.d("SS",
+                // "rotRateX: " + currentRotationRateX + " / rotRateY: " + currentRotationRateY
+                // + " / rotRateZ: "
+                // + currentRotationRateZ);
+                // Log.d("SS", "gyr timestamp: " + currentRotationTimestamp);
             }
 
             @Override
@@ -171,6 +177,11 @@ public class MainViewModel extends AndroidViewModel {
                     calculateShowingDate();
                 }
                 currentForceTimestamp = event.timestamp;
+
+                // Log.d("SS", "forceX: " + currentForceX + " / forceY: " + currentForceY + " /
+                // forceZ: "
+                // + currentForceZ);
+                // Log.d("SS", "acc timestamp: " + currentForceTimestamp);
             }
 
             @Override
@@ -182,26 +193,40 @@ public class MainViewModel extends AndroidViewModel {
 
     int xCounter = 0;
     float height = 0;
+    float zDist = 0;
+    float zVel = 0;
+    float zAccel = 0;
 
     private void calculateShowingDate() {
         if (currentRotationTimestamp == 0 || currentForceTimestamp == 0) {
             return;
         }
-        if (Math.abs(currentForceX) <= 0.2 || Math.abs(currentRotationRateX) <= 0.001) {
+        if (Math.abs(currentForceX) <= 0.2 || Math.abs(currentRotationRateY) <= 0.001) {
             return;
         }
 
-//        Log.d("SS", "forceZ: " + (STANDARD_GRAVITY - Math.abs(currentForceZ)) + " rotY: " + currentRotationY);
-        Log.d("SS", "ssdd: " + -currentRotationRateY);
-        boolean isIncremental = currentRotationRateY < 0;
-        float displacementY = (float) ((STANDARD_GRAVITY - Math.abs(currentForceZ)) * Math.pow(accelerometerDelta, 2) * Math.sin(currentRotationY));
-        if (isIncremental) {
-            height += displacementY;
-        } else {
-            height -= displacementY;
-        }
-
-        float y = height;
+        // Log.d("SS", "forceZ: " + (STANDARD_GRAVITY - Math.abs(currentForceZ)) + "
+        // rotY: " + currentRotationY);
+        // Log.d("SS", "ssdd: " + -currentRotationRateY);
+        // boolean isIncremental = currentRotationRateY < 0;
+        // float displacementY = (float) ((Math.abs(currentForceZ) - STANDARD_GRAVITY) *
+        // Math.pow(accelerometerDelta, 2));
+        float accel = (currentForceZ - STANDARD_GRAVITY);
+        // zAccel = accel;
+        float vel = accel * (((float)accelerometerDelta)/1000) + zVel;
+        zVel = (Math.abs(accel) < 1) ? (float)(vel * 0.99) : vel;
+        // zVel = vel;
+        float dist = vel * (((float)accelerometerDelta)/1000) + zDist;
+        zDist = dist;
+        // * Math.sin(currentRotationY));
+        // if (isIncremental) {
+        // height += displacementY;
+        // } else {
+        // height -= displacementY;
+        // }
+        // height += displacementY;
+        Log.d("SS", "(a= " + accel + ", v= " + vel + ", x= " + dist + ")");
+        float y = dist;
         float x = ++xCounter;
         List<Entry> showingList = showingEntriesLiveData.getValue();
         if (showingList == null || showingList.isEmpty()) {
@@ -217,6 +242,7 @@ public class MainViewModel extends AndroidViewModel {
         allEntries.add(addingEntry);
         showingList.add(addingEntry);
         showingEntriesLiveData.postValue(showingList);
+        Log.d("SS", "(" + x + " , " + y + ")");
     }
 
     private void stopSensors() {

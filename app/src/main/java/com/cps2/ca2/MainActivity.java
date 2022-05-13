@@ -27,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
 
     LineDataSet lineDataSet;
     LineData lineData;
+    private int VEL_MAX = 5;
+    private int ACCEL_MAX = 10;
+    private int DIST_MAX = 2;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         btnStartStop = findViewById(R.id.btn_start_stop);
         tvTimer = findViewById(R.id.tv_timer);
         chart = findViewById(R.id.line_chart);
-        chart.setTouchEnabled(false);
+        chart.setTouchEnabled(true);
         chart.setPinchZoom(false);
         lineDataSet = new LineDataSet(new ArrayList<>(), "asdf");
         lineData = new LineData(lineDataSet);
@@ -75,6 +78,12 @@ public class MainActivity extends AppCompatActivity {
                         chart.notifyDataSetChanged();
                         chart.invalidate();
                         chart.setVisibility(View.VISIBLE);
+                        chart.getAxisLeft().setAxisMinimum(-VEL_MAX);
+                        chart.getAxisLeft().setAxisMaximum(VEL_MAX);
+
+                        chart.getAxisRight().setEnabled(false);
+                        // chart.getAxisRight().setAxisMinimum(20);
+                        // chart.getAxisRight().setAxisMaximum(20);
                     } else {
                         chart.setVisibility(View.INVISIBLE);
                     }
