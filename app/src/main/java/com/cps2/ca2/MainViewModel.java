@@ -33,8 +33,10 @@ public class MainViewModel extends AndroidViewModel {
 
     MutableLiveData<String> startStopButtonTextLiveData = new MutableLiveData<String>();
     MutableLiveData<String> timerTextLiveData = new MutableLiveData<String>();
-    MutableLiveData<List<Entry>> showingEntriesLiveData = new MutableLiveData<>();
+    MutableLiveData<List<Entry>> showingRealTimeEntriesLiveData = new MutableLiveData<>();
     List<Entry> allEntries = new ArrayList<>();
+    MutableLiveData<List<Entry>> showingFinalEntriesLiveData = new MutableLiveData<>();
+
 
     private Sensor gyroscopeSensor;
     private SensorEventListener gyroscopeListener;
@@ -85,7 +87,7 @@ public class MainViewModel extends AndroidViewModel {
         startSensors();
         startTimer();
         startStopButtonTextLiveData.setValue("Stop");
-        showingEntriesLiveData.setValue(Collections.emptyList());
+        showingRealTimeEntriesLiveData.setValue(Collections.emptyList());
         allEntries.clear();
         // float height = 0;
         xCounter = 0;
@@ -93,16 +95,24 @@ public class MainViewModel extends AndroidViewModel {
         zVel = 0;
         zAccel = 0;
         currentRotationY = 0;
+        showingFinalEntriesLiveData.setValue(Collections.emptyList());
     }
 
     private void stopRunning() {
         stopSensors();
         stopTimer();
-        startStopButtonTextLiveData.setValue("Start_zzzzzz");
-        // showingEntriesLiveData.setValue(Collections.emptyList());
-        // allEntries.clear();
-        // height = 0;
-        // xCounter = 0;
+        startStopButtonTextLiveData.setValue("Start");
+
+        List finalList = new ArrayList<>(allEntries);
+//        for (int i = finalList.size()-1; i>=0; i--) {
+//            if (i % 2 == 0) {
+//                finalList.remove(i);
+//            }
+//        }
+        showingFinalEntriesLiveData.setValue(finalList);
+        showingRealTimeEntriesLiveData.setValue(Collections.emptyList());
+         allEntries.clear();
+         xCounter = 0;
     }
 
     private void startSensors() {
@@ -229,7 +239,7 @@ public class MainViewModel extends AndroidViewModel {
 
         float y = zDist;
         float x = ++xCounter;
-        List<Entry> showingList = showingEntriesLiveData.getValue();
+        List<Entry> showingList = showingRealTimeEntriesLiveData.getValue();
         if (showingList == null || showingList.isEmpty()) {
             showingList = new ArrayList<>();
         }
@@ -242,7 +252,7 @@ public class MainViewModel extends AndroidViewModel {
         Entry addingEntry = new Entry(x, y);
         allEntries.add(addingEntry);
         showingList.add(addingEntry);
-        showingEntriesLiveData.postValue(showingList);
+        showingRealTimeEntriesLiveData.postValue(showingList);
         Log.d("SS", "(" + x + " , " + y + ")");
     }
 

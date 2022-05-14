@@ -7,7 +7,19 @@
     tools:context=".MainActivity">
 
     <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/line_chart"
+        android:id="@+id/real_time_line_chart"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/tv_timer"
+        android:layout_margin="16dp"
+        android:visibility="invisible"
+        />
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/final_line_chart"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintLeft_toLeftOf="parent"

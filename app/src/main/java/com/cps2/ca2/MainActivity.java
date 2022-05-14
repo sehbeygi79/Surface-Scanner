@@ -11,7 +11,6 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
@@ -23,13 +22,10 @@ public class MainActivity extends AppCompatActivity {
 
     Button btnStartStop;
     TextView tvTimer;
-    LineChart chart;
-
-    LineDataSet lineDataSet;
-    LineData lineData;
+    LineChart realTimeChart, finalChart;
     private int VEL_MAX = 5;
     private int ACCEL_MAX = 10;
-    private int DIST_MAX = 2;
+    private int DIST_MAX = 5;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,18 +38,23 @@ public class MainActivity extends AppCompatActivity {
     void initViews() {
         btnStartStop = findViewById(R.id.btn_start_stop);
         tvTimer = findViewById(R.id.tv_timer);
-        chart = findViewById(R.id.line_chart);
-        chart.setTouchEnabled(true);
-        chart.setPinchZoom(false);
-        lineDataSet = new LineDataSet(new ArrayList<>(), "asdf");
-        lineData = new LineData(lineDataSet);
-        chart.setData(lineData);
-        btnStartStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                viewModel.onStartStopClicked();
-            }
-        });
+        realTimeChart = findViewById(R.id.real_time_line_chart);
+        realTimeChart.setTouchEnabled(true);
+        realTimeChart.setPinchZoom(false);
+
+        LineDataSet realTimeLineDataSet = new LineDataSet(new ArrayList<>(), "Ruggedness");
+        LineData realTimeLineData = new LineData(realTimeLineDataSet);
+        realTimeChart.setData(realTimeLineData);
+
+        finalChart = findViewById(R.id.final_line_chart);
+        finalChart.setTouchEnabled(true);
+        finalChart.setPinchZoom(true);
+        finalChart.setVisibility(View.INVISIBLE);
+
+        LineDataSet finalLineDataSet = new LineDataSet(new ArrayList<>(), "Final Ruggedness");
+        LineData finalLineData = new LineData(finalLineDataSet);
+        finalChart.setData(finalLineData);
+        btnStartStop.setOnClickListener(view -> viewModel.onStartStopClicked());
     }
 
     void initObservers() {
@@ -67,25 +68,52 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this,
                 timerText -> tvTimer.setText(timerText)
         );
-        viewModel.showingEntriesLiveData.observe(
+        viewModel.showingFinalEntriesLiveData.observe(
+                MainActivity.this,
+                allEntries -> {
+
+                    if (allEntries.size() > 0) {
+                        finalChart.setVisibility(View.VISIBLE);
+                        realTimeChart.setVisibility(View.INVISIBLE);
+                        LineDataSet lineDataSet = new LineDataSet(allEntries, "Final Ruggedness");
+                        lineDataSet.setDrawCircles(false);
+                        LineData data = new LineData(lineDataSet);
+                        data.setDrawValues(false);
+                        finalChart.setData(data);
+                        finalChart.notifyDataSetChanged();
+                        finalChart.invalidate();
+
+//                        finalChart.getAxisLeft().setAxisMinimum(-DIST_MAX);
+//                        finalChart.getAxisLeft().setAxisMaximum(DIST_MAX);
+
+                        finalChart.getAxisRight().setEnabled(false);
+                    } else {
+                        finalChart.setVisibility(View.INVISIBLE);
+                    }
+                }
+        );
+        viewModel.showingRealTimeEntriesLiveData.observe(
                 MainActivity.this,
                 entries -> {
                     if (entries.size() > 0) {
-                        LineDataSet lineDataSet = new LineDataSet(entries, "asdf");
+                        LineDataSet lineDataSet = new LineDataSet(entries, "Ruggedness");
                         LineData data = new LineData(lineDataSet);
                         data.setValueTextColor(Color.BLUE);
-                        chart.setData(data);
-                        chart.notifyDataSetChanged();
-                        chart.invalidate();
-                        chart.setVisibility(View.VISIBLE);
-                        chart.getAxisLeft().setAxisMinimum(-DIST_MAX);
-                        chart.getAxisLeft().setAxisMaximum(DIST_MAX);
+                        data.setDrawValues(false);
+                        realTimeChart.setData(data);
+                        realTimeChart.notifyDataSetChanged();
+                        realTimeChart.invalidate();
+                        realTimeChart.setVisibility(View.VISIBLE);
+                        realTimeChart.getAxisLeft().setAxisMinimum(-DIST_MAX);
+                        realTimeChart.getAxisLeft().setAxisMaximum(DIST_MAX);
 
-                        chart.getAxisRight().setEnabled(false);
+
+                        realTimeChart.getAxisRight().setEnabled(false);
+                        finalChart.setVisibility(View.INVISIBLE);
                         // chart.getAxisRight().setAxisMinimum(20);
                         // chart.getAxisRight().setAxisMaximum(20);
                     } else {
-                        chart.setVisibility(View.INVISIBLE);
+                        realTimeChart.setVisibility(View.INVISIBLE);
                     }
                 }
         );
