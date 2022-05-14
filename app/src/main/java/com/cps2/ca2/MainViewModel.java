@@ -188,6 +188,15 @@ public class MainViewModel extends AndroidViewModel {
     float zDist = 0;
     float zVel = 0;
     float zAccel = 0;
+    private float Z_ACCEL_THRESH = 0.85f;
+    private float Z_VEL_CONV_RATE = 0.99f;
+    private float Z_VEL_CAP = 2f;
+    private float Y_ROT_THRESH = (float) (Math.PI / 6);
+    private float UPWARD_SCALE = 2f;
+    private float DOWNWARD_SCALE = 1f;
+    private float Z_DIST_CAP = 2f;
+    private float GYRO_AUG_STEP = 0.1f;
+
 
     private void calculateShowingDate() {
         if (currentRotationTimestamp == 0 || currentAccelTimestamp == 0) {
@@ -199,21 +208,19 @@ public class MainViewModel extends AndroidViewModel {
 
         zAccel = currentAccelZ;
         // converging velocity to 0 when acceleration is low
-        zVel = (Math.abs(zAccel) < 0.85) ? (float) (zVel * 0.99) : zVel + (float) (zAccel * accelerometerDelta);
+        zVel = (Math.abs(zAccel) < Z_ACCEL_THRESH) ? (float) (zVel * Z_VEL_CONV_RATE)
+                : zVel + (float) (zAccel * accelerometerDelta);
         // added cap for vel
-        zVel = (zVel > 2) ? 2 : (zVel < -2) ? -2 : zVel;
+        zVel = (zVel > Z_VEL_CAP) ? Z_VEL_CAP : (zVel < -Z_VEL_CAP) ? -Z_VEL_CAP : zVel;
 
         float displacement = (float) (zVel * accelerometerDelta);
         // using gyroscope to augment ascending/descending data
-        zDist += (currentRotationY < -0.5) ? 0.1 : (currentRotationY > 0.5) ? -0.1 : 0;
+        zDist += (currentRotationY < -Y_ROT_THRESH) ? GYRO_AUG_STEP : (currentRotationY > Y_ROT_THRESH) ? -GYRO_AUG_STEP : 0;
         // scaling displacement
-        zDist += (displacement > 0) ? displacement * 2 : displacement * 1;
+        zDist += (displacement > 0) ? displacement * UPWARD_SCALE : displacement * DOWNWARD_SCALE;
         // added cap for dist
-        zDist = (zDist > 2) ? 2 : (zDist < -2) ? -2 : zDist;
+        zDist = (zDist > Z_DIST_CAP) ? Z_DIST_CAP : (zDist < -Z_DIST_CAP) ? -Z_DIST_CAP : zDist;
 
-
-
-        
         // Log.d("SS", "currentTotationY: " + currentRotationY);
         // Log.d("SS", "displacement: " + displacement);
 
