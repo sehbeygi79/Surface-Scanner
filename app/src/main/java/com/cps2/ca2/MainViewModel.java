@@ -38,7 +38,7 @@ public class MainViewModel extends AndroidViewModel {
 
     private Sensor gyroscopeSensor;
     private SensorEventListener gyroscopeListener;
-    private long rotationDelta;
+    private float rotationDelta;
 
     private Sensor accelerometerSensor;
     private SensorEventListener accelerometerListener;
@@ -85,17 +85,24 @@ public class MainViewModel extends AndroidViewModel {
         startSensors();
         startTimer();
         startStopButtonTextLiveData.setValue("Stop");
-
+        showingEntriesLiveData.setValue(Collections.emptyList());
+        allEntries.clear();
+        // float height = 0;
+        xCounter = 0;
+        zDist = 0;
+        zVel = 0;
+        zAccel = 0;
+        currentRotationY = 0;
     }
 
     private void stopRunning() {
         stopSensors();
         stopTimer();
         startStopButtonTextLiveData.setValue("Start_zzzzzz");
-        showingEntriesLiveData.setValue(Collections.emptyList());
-        allEntries.clear();
-        height = 0;
-        xCounter = 0;
+        // showingEntriesLiveData.setValue(Collections.emptyList());
+        // allEntries.clear();
+        // height = 0;
+        // xCounter = 0;
     }
 
     private void startSensors() {
@@ -105,18 +112,18 @@ public class MainViewModel extends AndroidViewModel {
         initListeners();
 
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        sensorManager.registerListener(gyroscopeListener, gyroscopeSensor, 5000);
+        sensorManager.registerListener(gyroscopeListener, gyroscopeSensor, 500000);
 
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        sensorManager.registerListener(accelerometerListener, accelerometerSensor, 5000);
+        sensorManager.registerListener(accelerometerListener, accelerometerSensor, 500000);
     }
 
     private float currentRotationRateX, currentRotationRateY, currentRotationRateZ;
     private float currentRotationY = 0f;
     private long currentRotationTimestamp = 0;
 
-    private float currentForceX, currentForceY, currentAccelZ;
-    private long currentForceTimestamp = 0;
+    private float currentAccelX, currentAccelY, currentAccelZ;
+    private long currentAccelTimestamp = 0;
 
     private void initListeners() {
         gyroscopeListener = new SensorEventListener() {
@@ -136,11 +143,11 @@ public class MainViewModel extends AndroidViewModel {
 
                     // Normalize the rotation vector if it's big enough to get the axis
                     // (that is, EPSILON should represent your maximum allowable margin of error)
-                    if (omegaMagnitude > EPSILON) {
-                        axisX /= omegaMagnitude;
-                        axisY /= omegaMagnitude;
-                        axisZ /= omegaMagnitude;
-                    }
+                    // if (omegaMagnitude > EPSILON) {
+                    // axisX /= omegaMagnitude;
+                    // axisY /= omegaMagnitude;
+                    // axisZ /= omegaMagnitude;
+                    // }
 
                     currentRotationRateX = axisX;
                     currentRotationRateY = axisY;
@@ -166,22 +173,22 @@ public class MainViewModel extends AndroidViewModel {
         accelerometerListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                if (currentForceTimestamp != 0) {
-                    accelerometerDelta = (float) (event.timestamp - currentForceTimestamp) / 1000000000;
+                if (currentAccelTimestamp != 0) {
+                    accelerometerDelta = (float) (event.timestamp - currentAccelTimestamp) / 1000000000;
                     // Force values are m/s^2
-                    currentForceX = event.values[0];
-                    currentForceY = event.values[1];
+                    currentAccelX = event.values[0];
+                    currentAccelY = event.values[1];
                     currentAccelZ = event.values[2];
 
                     float accuracy = event.accuracy;
                     calculateShowingDate();
                 }
-                currentForceTimestamp = event.timestamp;
+                currentAccelTimestamp = event.timestamp;
 
-                // Log.d("SS", "forceX: " + currentForceX + " / forceY: " + currentForceY + " /
+                // Log.d("SS", "forceX: " + currentAccelX + " / forceY: " + currentAccelY + " /
                 // forceZ: "
                 // + currentAccelZ);
-                // Log.d("SS", "acc timestamp: " + currentForceTimestamp);
+                // Log.d("SS", "acc timestamp: " + currentAccelTimestamp);
             }
 
             @Override
@@ -192,23 +199,33 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     int xCounter = 0;
-    float height = 0;
+    // float height = 0;
     float zDist = 0;
     float zVel = 0;
     float zAccel = 0;
 
     private void calculateShowingDate() {
-        if (currentRotationTimestamp == 0 || currentForceTimestamp == 0) {
+        if (currentRotationTimestamp == 0 || currentAccelTimestamp == 0) {
             return;
         }
-        if (Math.abs(currentForceX) <= 0.2 || Math.abs(currentRotationRateY) <= 0.001) {
+        if (Math.abs(currentAccelX) <= 0.05) {
+            Log.d("SS", "returned: ");
             return;
         }
 
         zAccel = currentAccelZ - 0;
-        zVel += (float) (zAccel * accelerometerDelta);
+        zVel = (Math.abs(zAccel) < 0.85) ? (float) (zVel * 0.99) : zVel + (float) (zAccel * accelerometerDelta);
 
-        zDist += (float) (zVel * accelerometerDelta);
+        // zVel += (float) (zAccel * accelerometerDelta);
+
+        float displacement = (float) (zVel * accelerometerDelta);
+
+        // some manual adjustments
+        zDist += (currentRotationY < -0.5) ? 0.1 : (currentRotationY > 0.5) ? -0.1 : 0;
+        zDist += (displacement > 0) ? displacement * 2 : displacement;
+        zDist = (zDist > 2) ? 2 : (zDist < -2) ? -2 : zDist;
+        Log.d("SS", "currentTotationY: " + currentRotationY);
+        Log.d("SS", "displacement: " + displacement);
 
         float y = zDist;
         float x = ++xCounter;
