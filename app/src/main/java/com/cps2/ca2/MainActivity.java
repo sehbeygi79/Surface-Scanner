@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private int VEL_MAX = 5;
     private int ACCEL_MAX = 10;
     private int DIST_MAX = 5;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,12 +63,10 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this,
                 buttonText -> {
                     btnStartStop.setText(buttonText);
-                }
-        );
+                });
         viewModel.timerTextLiveData.observe(
                 MainActivity.this,
-                timerText -> tvTimer.setText(timerText)
-        );
+                timerText -> tvTimer.setText(timerText));
         viewModel.showingFinalEntriesLiveData.observe(
                 MainActivity.this,
                 allEntries -> {
@@ -77,28 +76,28 @@ public class MainActivity extends AppCompatActivity {
                         realTimeChart.setVisibility(View.INVISIBLE);
                         LineDataSet lineDataSet = new LineDataSet(allEntries, "Final Ruggedness");
                         lineDataSet.setDrawCircles(false);
+                        lineDataSet.setColor(Color.RED);
+                        lineDataSet.setLineWidth(2);
                         LineData data = new LineData(lineDataSet);
                         data.setDrawValues(false);
                         finalChart.setData(data);
                         finalChart.notifyDataSetChanged();
                         finalChart.invalidate();
 
-//                        finalChart.getAxisLeft().setAxisMinimum(-DIST_MAX);
-//                        finalChart.getAxisLeft().setAxisMaximum(DIST_MAX);
-
+                        finalChart.getAxisLeft().setAxisMinimum(-DIST_MAX);
+                        finalChart.getAxisLeft().setAxisMaximum(DIST_MAX);
                         finalChart.getAxisRight().setEnabled(false);
                     } else {
                         finalChart.setVisibility(View.INVISIBLE);
                     }
-                }
-        );
+                });
         viewModel.showingRealTimeEntriesLiveData.observe(
                 MainActivity.this,
                 entries -> {
                     if (entries.size() > 0) {
                         LineDataSet lineDataSet = new LineDataSet(entries, "Ruggedness");
+                        lineDataSet.setLineWidth(2);
                         LineData data = new LineData(lineDataSet);
-                        data.setValueTextColor(Color.BLUE);
                         data.setDrawValues(false);
                         realTimeChart.setData(data);
                         realTimeChart.notifyDataSetChanged();
@@ -106,16 +105,11 @@ public class MainActivity extends AppCompatActivity {
                         realTimeChart.setVisibility(View.VISIBLE);
                         realTimeChart.getAxisLeft().setAxisMinimum(-DIST_MAX);
                         realTimeChart.getAxisLeft().setAxisMaximum(DIST_MAX);
-
-
                         realTimeChart.getAxisRight().setEnabled(false);
                         finalChart.setVisibility(View.INVISIBLE);
-                        // chart.getAxisRight().setAxisMinimum(20);
-                        // chart.getAxisRight().setAxisMaximum(20);
                     } else {
                         realTimeChart.setVisibility(View.INVISIBLE);
                     }
-                }
-        );
+                });
     }
 }
