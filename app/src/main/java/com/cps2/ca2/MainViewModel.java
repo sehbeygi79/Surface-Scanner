@@ -87,7 +87,7 @@ public class MainViewModel extends AndroidViewModel {
         startStopButtonTextLiveData.setValue("Stop");
         showingEntriesLiveData.setValue(Collections.emptyList());
         allEntries.clear();
-        // float height = 0;
+        //
         xCounter = 0;
         zDist = 0;
         zVel = 0;
@@ -98,11 +98,7 @@ public class MainViewModel extends AndroidViewModel {
     private void stopRunning() {
         stopSensors();
         stopTimer();
-        startStopButtonTextLiveData.setValue("Start_zzzzzz");
-        // showingEntriesLiveData.setValue(Collections.emptyList());
-        // allEntries.clear();
-        // height = 0;
-        // xCounter = 0;
+        startStopButtonTextLiveData.setValue("Start");
     }
 
     private void startSensors() {
@@ -139,7 +135,8 @@ public class MainViewModel extends AndroidViewModel {
                     float axisZ = event.values[2];
 
                     // Calculate the angular speed of the sample
-                    float omegaMagnitude = (float) sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
+                    // float omegaMagnitude = (float) sqrt(axisX * axisX + axisY * axisY + axisZ *
+                    // axisZ);
 
                     // Normalize the rotation vector if it's big enough to get the axis
                     // (that is, EPSILON should represent your maximum allowable margin of error)
@@ -156,12 +153,6 @@ public class MainViewModel extends AndroidViewModel {
                     calculateShowingDate();
                 }
                 currentRotationTimestamp = event.timestamp;
-
-                // Log.d("SS",
-                // "rotRateX: " + currentRotationRateX + " / rotRateY: " + currentRotationRateY
-                // + " / rotRateZ: "
-                // + currentRotationRateZ);
-                // Log.d("SS", "gyr timestamp: " + currentRotationTimestamp);
             }
 
             @Override
@@ -175,7 +166,7 @@ public class MainViewModel extends AndroidViewModel {
             public void onSensorChanged(SensorEvent event) {
                 if (currentAccelTimestamp != 0) {
                     accelerometerDelta = (float) (event.timestamp - currentAccelTimestamp) / 1000000000;
-                    // Force values are m/s^2
+                    // acceleration values are m/s^2
                     currentAccelX = event.values[0];
                     currentAccelY = event.values[1];
                     currentAccelZ = event.values[2];
@@ -184,11 +175,6 @@ public class MainViewModel extends AndroidViewModel {
                     calculateShowingDate();
                 }
                 currentAccelTimestamp = event.timestamp;
-
-                // Log.d("SS", "forceX: " + currentAccelX + " / forceY: " + currentAccelY + " /
-                // forceZ: "
-                // + currentAccelZ);
-                // Log.d("SS", "acc timestamp: " + currentAccelTimestamp);
             }
 
             @Override
@@ -199,7 +185,6 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     int xCounter = 0;
-    // float height = 0;
     float zDist = 0;
     float zVel = 0;
     float zAccel = 0;
@@ -209,26 +194,32 @@ public class MainViewModel extends AndroidViewModel {
             return;
         }
         if (Math.abs(currentAccelX) <= 0.05) {
-            Log.d("SS", "returned: ");
             return;
         }
 
-        zAccel = currentAccelZ - 0;
+        zAccel = currentAccelZ;
+        // converging velocity to 0 when acceleration is low
         zVel = (Math.abs(zAccel) < 0.85) ? (float) (zVel * 0.99) : zVel + (float) (zAccel * accelerometerDelta);
-
-        // zVel += (float) (zAccel * accelerometerDelta);
+        // added cap for vel
+        zVel = (zVel > 2) ? 2 : (zVel < -2) ? -2 : zVel;
 
         float displacement = (float) (zVel * accelerometerDelta);
-
-        // some manual adjustments
+        // using gyroscope to augment ascending/descending data
         zDist += (currentRotationY < -0.5) ? 0.1 : (currentRotationY > 0.5) ? -0.1 : 0;
-        zDist += (displacement > 0) ? displacement * 2 : displacement;
+        // scaling displacement
+        zDist += (displacement > 0) ? displacement * 2 : displacement * 1;
+        // added cap for dist
         zDist = (zDist > 2) ? 2 : (zDist < -2) ? -2 : zDist;
-        Log.d("SS", "currentTotationY: " + currentRotationY);
-        Log.d("SS", "displacement: " + displacement);
+
+
+
+        
+        // Log.d("SS", "currentTotationY: " + currentRotationY);
+        // Log.d("SS", "displacement: " + displacement);
 
         float y = zDist;
         float x = ++xCounter;
+        // sending data to be displayed on chart
         List<Entry> showingList = showingEntriesLiveData.getValue();
         if (showingList == null || showingList.isEmpty()) {
             showingList = new ArrayList<>();
@@ -243,7 +234,7 @@ public class MainViewModel extends AndroidViewModel {
         allEntries.add(addingEntry);
         showingList.add(addingEntry);
         showingEntriesLiveData.postValue(showingList);
-        Log.d("SS", "(" + x + " , " + y + ")");
+        // Log.d("SS", "(" + x + " , " + y + ")");
     }
 
     private void stopSensors() {
