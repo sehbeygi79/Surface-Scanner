@@ -122,10 +122,10 @@ public class MainViewModel extends AndroidViewModel {
         initListeners();
 
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        sensorManager.registerListener(gyroscopeListener, gyroscopeSensor, 500000);
+        sensorManager.registerListener(gyroscopeListener, gyroscopeSensor, 50000);
 
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        sensorManager.registerListener(accelerometerListener, accelerometerSensor, 500000);
+        sensorManager.registerListener(accelerometerListener, accelerometerSensor, 50000);
     }
 
     private float currentRotationRateX, currentRotationRateY, currentRotationRateZ;
@@ -209,7 +209,7 @@ public class MainViewModel extends AndroidViewModel {
     private float UPWARD_SCALE = 2f;
     private float DOWNWARD_SCALE = 1f;
     private float Z_DIST_CAP = 2f;
-    private float GYRO_AUG_STEP = 0.1f;
+    private float GYRO_AUG_STEP = 0.05f;
 
 
     private void calculateShowingDate() {
