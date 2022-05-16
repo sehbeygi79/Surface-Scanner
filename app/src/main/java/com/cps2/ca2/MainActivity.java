@@ -23,8 +23,8 @@ public class MainActivity extends AppCompatActivity {
     Button btnStartStop;
     TextView tvTimer;
     LineChart realTimeChart, finalChart;
-    private int VEL_MAX = 5;
-    private int ACCEL_MAX = 10;
+    // private int VEL_MAX = 5;
+    // private int ACCEL_MAX = 10;
     private int DIST_MAX = 5;
 
     @Override

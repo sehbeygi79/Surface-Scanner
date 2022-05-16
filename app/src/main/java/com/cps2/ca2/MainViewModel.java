@@ -37,7 +37,6 @@ public class MainViewModel extends AndroidViewModel {
     List<Entry> allEntries = new ArrayList<>();
     MutableLiveData<List<Entry>> showingFinalEntriesLiveData = new MutableLiveData<>();
 
-
     private Sensor gyroscopeSensor;
     private SensorEventListener gyroscopeListener;
     private float rotationDelta;
@@ -104,15 +103,11 @@ public class MainViewModel extends AndroidViewModel {
         startStopButtonTextLiveData.setValue("Start");
 
         List finalList = new ArrayList<>(allEntries);
-//        for (int i = finalList.size()-1; i>=0; i--) {
-//            if (i % 2 == 0) {
-//                finalList.remove(i);
-//            }
-//        }
+
         showingFinalEntriesLiveData.setValue(finalList);
         showingRealTimeEntriesLiveData.setValue(Collections.emptyList());
-         allEntries.clear();
-         xCounter = 0;
+        allEntries.clear();
+        xCounter = 0;
     }
 
     private void startSensors() {
@@ -202,21 +197,21 @@ public class MainViewModel extends AndroidViewModel {
     float zDist = 0;
     float zVel = 0;
     float zAccel = 0;
+    private float X_ACCEL_THRESH = 0.1f;
     private float Z_ACCEL_THRESH = 0.85f;
     private float Z_VEL_CONV_RATE = 0.99f;
     private float Z_VEL_CAP = 2f;
     private float Y_ROT_THRESH = (float) (Math.PI / 6);
-    private float UPWARD_SCALE = 2f;
-    private float DOWNWARD_SCALE = 1f;
-    private float Z_DIST_CAP = 2f;
-    private float GYRO_AUG_STEP = 0.05f;
-
+    // private float UPWARD_SCALE = 1.5f;
+    // private float DOWNWARD_SCALE = 1.5f;
+    private float Z_DIST_CAP = 5f;
+    private float GYRO_AUG_STEP = 0.01f;
 
     private void calculateShowingDate() {
         if (currentRotationTimestamp == 0 || currentAccelTimestamp == 0) {
             return;
         }
-        if (Math.abs(currentAccelX) <= 0.05) {
+        if (Math.abs(currentAccelX) <= X_ACCEL_THRESH) {
             return;
         }
 
@@ -229,18 +224,16 @@ public class MainViewModel extends AndroidViewModel {
 
         float displacement = (float) (zVel * accelerometerDelta);
         // using gyroscope to augment ascending/descending data
-        zDist += (currentRotationY < -Y_ROT_THRESH) ? GYRO_AUG_STEP : (currentRotationY > Y_ROT_THRESH) ? -GYRO_AUG_STEP : 0;
+        zDist += (currentRotationY < -Y_ROT_THRESH) ? GYRO_AUG_STEP
+                : (currentRotationY > Y_ROT_THRESH) ? -GYRO_AUG_STEP : 0;
         // scaling displacement
-        zDist += (displacement > 0) ? displacement * UPWARD_SCALE : displacement * DOWNWARD_SCALE;
+        // zDist += (displacement > 0) ? displacement * UPWARD_SCALE : displacement *
+        // DOWNWARD_SCALE;
         // added cap for dist
         zDist = (zDist > Z_DIST_CAP) ? Z_DIST_CAP : (zDist < -Z_DIST_CAP) ? -Z_DIST_CAP : zDist;
 
-        // Log.d("SS", "currentTotationY: " + currentRotationY);
-        // Log.d("SS", "displacement: " + displacement);
-
         float y = zDist;
         float x = ++xCounter;
-
         // sending data to be displayed on chart
         List<Entry> showingList = showingRealTimeEntriesLiveData.getValue();
 
@@ -257,7 +250,6 @@ public class MainViewModel extends AndroidViewModel {
         allEntries.add(addingEntry);
         showingList.add(addingEntry);
         showingRealTimeEntriesLiveData.postValue(showingList);
-        Log.d("SS", "(" + x + " , " + y + ")");
     }
 
     private void stopSensors() {
