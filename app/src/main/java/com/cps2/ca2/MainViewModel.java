@@ -202,8 +202,8 @@ public class MainViewModel extends AndroidViewModel {
     private float Z_VEL_CONV_RATE = 0.99f;
     private float Z_VEL_CAP = 2f;
     private float Y_ROT_THRESH = (float) (Math.PI / 6);
-    // private float UPWARD_SCALE = 1.5f;
-    // private float DOWNWARD_SCALE = 1.5f;
+     private float UPWARD_SCALE = 1.5f;
+     private float DOWNWARD_SCALE = 1.5f;
     private float Z_DIST_CAP = 5f;
     private float GYRO_AUG_STEP = 0.01f;
 
@@ -227,8 +227,7 @@ public class MainViewModel extends AndroidViewModel {
         zDist += (currentRotationY < -Y_ROT_THRESH) ? GYRO_AUG_STEP
                 : (currentRotationY > Y_ROT_THRESH) ? -GYRO_AUG_STEP : 0;
         // scaling displacement
-        // zDist += (displacement > 0) ? displacement * UPWARD_SCALE : displacement *
-        // DOWNWARD_SCALE;
+        zDist += (displacement > 0) ? displacement * UPWARD_SCALE : displacement * DOWNWARD_SCALE;
         // added cap for dist
         zDist = (zDist > Z_DIST_CAP) ? Z_DIST_CAP : (zDist < -Z_DIST_CAP) ? -Z_DIST_CAP : zDist;
 
