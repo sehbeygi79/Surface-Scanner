@@ -1,4 +1,4 @@
-package com.cps2.ca2;
+package com.surface_scanner;
 
 import org.junit.Test;
 

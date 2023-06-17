@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }
     }
 }
-rootProject.name = "CPS2"
+rootProject.name = "Surface_Scanner"
 include ':app'

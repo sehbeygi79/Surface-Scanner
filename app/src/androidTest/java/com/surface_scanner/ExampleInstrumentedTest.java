@@ -1,4 +1,4 @@
-package com.cps2.ca2;
+package com.surface_scanner;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("com.cps2.ca2", appContext.getPackageName());
+        assertEquals("com.surface_scanner", appContext.getPackageName());
     }
 }

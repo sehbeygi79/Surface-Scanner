@@ -1,4 +1,4 @@
-package com.cps2.ca2;
+package com.surface_scanner;
 
 import static java.lang.Math.sqrt;
 
@@ -202,10 +202,10 @@ public class MainViewModel extends AndroidViewModel {
     private float Z_VEL_CONV_RATE = 0.99f;
     private float Z_VEL_CAP = 2f;
     private float Y_ROT_THRESH = (float) (Math.PI / 6);
-     private float UPWARD_SCALE = 1.5f;
-     private float DOWNWARD_SCALE = 1.5f;
+     private float UPWARD_SCALE = 2.0f;
+     private float DOWNWARD_SCALE = 1.0f;
     private float Z_DIST_CAP = 5f;
-    private float GYRO_AUG_STEP = 0.01f;
+    private float GYRO_AUG_STEP = 0.02f;
 
     private void calculateShowingDate() {
         if (currentRotationTimestamp == 0 || currentAccelTimestamp == 0) {
